@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+data:
+  application.resourceTrackingMethod: annotation
+  admin.enabled: 'false'
+  statusbadge.enabled: 'true'
+  url: https://cd.rhgresearch.com
+  dex.config: |
+    connectors:
+    - type: github
+      id: github
+      name: GitHub
+      config:
+        clientID: $sso-client:dex.github.clientId
+        clientSecret: $sso-client:dex.github.clientSecret
+        orgs:
+        - name: RhodiumGroup
+        useLoginAsID: true
+    # Setting staticClients allows Argo Workflows to use Argo CD's Dex installation for authentication
+    staticClients:
+      - id: argo-workflows-sso
+        name: Argo Workflow
+        redirectURIs:
+          - https://workflows.rhgresearch.com/oauth2/callback
+        secretEnv: ARGO_WORKFLOWS_SSO_CLIENT_SECRET
