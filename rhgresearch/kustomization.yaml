@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - argo-cd.yaml
+  - argo-workflows.yaml
   - cert-manager.yaml
   - rhgresearch.yaml
   - external-secrets.yaml
