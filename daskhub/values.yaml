@@ -71,7 +71,7 @@ daskhub:
         GitHubOAuthenticator:
           oauth_callback_url: "https://notebooks.rhgresearch.com/hub/oauth_callback"
           allowed_organizations:
-            - rhodiumgroup:admins
+            - rhodiumgroup:notebook-users
           scope:
             - read:org
       extraConfig:
