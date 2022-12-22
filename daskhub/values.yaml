@@ -1,0 +1,314 @@
+daskhub:
+  # daskhub Helm chart values.
+  # This config is based off of the approach used by the Pangeo cloud deployments
+  # (https://github.com/pangeo-data/pangeo-cloud-federation)
+  jupyterhub:
+    prePuller:
+      hook:
+        enabled: false
+      continuous:
+        enabled: false
+    singleuser:
+      # see https://jupyterhub-kubespawner.readthedocs.io/en/latest/spawner.html for a
+      # description of configuration options
+      image:
+        name: pangeo/pangeo-notebook
+        tag: "2022.11.03"
+      startTimeout: 600
+      storage:
+        capacity: 10Gi
+        extraVolumes:
+          - name: cil-data-bucket
+            persistentVolumeClaim:
+              claimName: cil-data-bucket
+          - name: rhg-data-bucket
+            persistentVolumeClaim:
+              claimName: rhg-data-bucket
+          - name: rhg-data-scratch-bucket
+            persistentVolumeClaim:
+              claimName: rhg-data-scratch-bucket
+        extraVolumeMounts:
+          - name: rhg-data-scratch-bucket
+            mountPath: /gcs/rhg-data-scratch
+          - name: rhg-data-bucket
+            mountPath: /gcs/rhg-data
+          - name: cil-data-bucket
+            mountPath: /gcs/impactlab-data
+      cpu:
+        limit: 7
+        guarantee: 7
+      memory:
+        limit: 45G
+        guarantee: 45G
+      cloudMetadata:
+        blockWithIptables: false
+      serviceAccountName: jhubuser
+      extraEnv:
+        CIL_SCRATCH_PREFIX: "gs://rhg-data-scratch"
+        CIL_SCRATCH_BUCKET: "rhg-data-scratch"
+        RHG_SCRATCH_PREFIX: "gs://rhg-data-scratch"
+        RHG_SCRATCH_BUCKET: "rhg-data-scratch"
+      profileList:
+        - display_name: "pangeo/pangeo-notebook:2022.11.03"
+          kubespawner_override:
+            image: pangeo/pangeo-notebook:2022.11.03
+          default: true
+    hub:
+      resources:
+        requests:
+          cpu: "0.25"
+          memory: 0.5Gi
+        limits:
+          cpu: "1.25"
+          memory: 1Gi
+      config:
+        Authenticator:
+          admin_users:
+            - delgadom
+        JupyterHub:
+          admin_access: true
+          authenticator_class: github
+        GitHubOAuthenticator:
+          oauth_callback_url: "https://notebooks.rhgresearch.com/hub/oauth_callback"
+          allowed_organizations:
+            - rhodiumgroup:admins
+          scope:
+            - read:org
+      extraConfig:
+        # Register Dask Gateway service and setup singleuser environment.
+        00-add-dask-gateway-values: |
+          # 1. Sets `DASK_GATEWAY__PROXY_ADDRESS` in the singleuser environment.
+          # 2. Adds the URL for the Dask Gateway JupyterHub service.
+          import os
+
+          # These are set by jupyterhub.
+          release_name = os.environ["HELM_RELEASE_NAME"]
+          release_namespace = os.environ["POD_NAMESPACE"]
+
+          # Adds Dask Gateway as a JupyterHub service to make the gateway available at
+          # {HUB_URL}/services/dask-gateway
+          service_url = "http://traefik-{}-dask-gateway.{}".format(release_name, release_namespace)
+          for service in c.JupyterHub.services:
+              if service["name"] == "dask-gateway":
+                  if not service.get("url", None):
+                      print("Adding dask-gateway service URL")
+                      service.setdefault("url", service_url)
+                  break
+          else:
+              print("dask-gateway service not found. Did you set jupyterhub.hub.services.dask-gateway.apiToken?")
+
+          # Setting gateway address to send API traffic directly to dask-gateway traefik, rather than going through 
+          # jupyterhub proxy. This is recommended when traffic only comes from within the k8s cluster.
+          gateway_address = service_url + "/services/dask-gateway"
+          print("Setting DASK_GATEWAY__ADDRESS {}".format(gateway_address))
+
+          # Internal address to connect to the Dask Gateway.
+          c.KubeSpawner.environment.setdefault("DASK_GATEWAY__ADDRESS", gateway_address)
+          # Internal address for the Dask Gateway proxy.
+          c.KubeSpawner.environment.setdefault("DASK_GATEWAY__PROXY_ADDRESS", "gateway://traefik-{}-dask-gateway.{}:80".format(release_name, release_namespace))
+          # Relative address for the dashboard link.
+          c.KubeSpawner.environment.setdefault("DASK_GATEWAY__PUBLIC_ADDRESS", "/services/dask-gateway/")
+          # Use JupyterHub to authenticate with Dask Gateway.
+          c.KubeSpawner.environment.setdefault("DASK_GATEWAY__AUTH__TYPE", "jupyterhub")
+    scheduling:
+      userScheduler:
+        enabled: true
+      userPlaceholder:
+        enabled: false
+      userPods:
+        nodeAffinity:
+          matchNodePurpose: require
+      corePods:
+        nodeAffinity:
+          matchNodePurpose: require
+    cull:
+      timeout: 259200
+
+    proxy:
+      https:
+        enabled: true
+        type: secret
+        secret:
+          name: jhub-com-tls
+        hosts:
+          - "notebooks.rhgresearch.com"
+
+  dask-gateway:
+    gateway:
+      extraConfig:
+        optionHandler: |
+          from dask_gateway_server.options import Options, String, Select, Mapping, Float, Bool
+          from math import ceil
+  
+          def cluster_options(user):
+  
+              # A mapping from profile name to configuration overrides
+              # 12/15/20: always using one core unless explicitly defined by
+              # `cpus` due to this issue: https://github.com/dask/dask-gateway/issues/364
+              # Can update this behavior if that gets addressed
+              # standard_cores = 1.0
+              standard_mem = 6.5
+              scaling_factors = {
+                  "micro": 1,
+                  "standard": 1.75,
+                  "big": 3.5,
+                  "giant": 7
+              }
+  
+              default_worker_tolerations = {
+                  "0": {
+                      "key": "k8s.dask.org_dedicated",
+                      "operator": "Equal",
+                      "value": "worker",
+                      "effect": "NoSchedule"
+                  },
+                  "1": {
+                      "key": "k8s.dask.org/dedicated",
+                      "operator": "Equal",
+                      "value": "worker",
+                      "effect": "NoSchedule"
+                  }
+  
+              }
+  
+              # put scheduler in jupyter pool to make it non-preemptible
+              scheduler_tolerations = [
+                  {
+                      "key": "hub.jupyter.org_dedicated",
+                      "operator": "Equal",
+                      "value": "user",
+                      "effect": "NoSchedule"
+                  },
+                  {
+                      "key": "hub.jupyter.org/dedicated",
+                      "operator": "Equal",
+                      "value": "user",
+                      "effect": "NoSchedule"
+                  }
+  
+              ]
+  
+              def option_handler(options):
+                  if (":" not in options.worker_image) or (":" not in options.scheduler_image):
+                      raise ValueError("When specifying an image you must also provide a tag")
+                  extra_annotations = {
+                      "hub.jupyter.org/username": user.name
+                  }
+                  default_extra_labels = {
+                      "hub.jupyter.org/username": user.name,
+                  }
+  
+                  this_env = options.env_items
+  
+                  # add active memory manager flag
+                  this_env[
+                    "DASK_DISTRIBUTED__SCHEDULER__ACTIVE_MEMORY_MANAGER__START"
+                  ] = str(options.active_memory_manager)
+  
+                  # add extra pip packages to be picked up by prepare.sh
+                  if options.extra_pip_packages != "":
+                      this_env["EXTRA_PIP_PACKAGES"] = options.extra_pip_packages
+  
+                  # calculate cpu request and limit
+                  # see above comment for why we are commenting out standard_cores for now
+                  # cpu_req = scaling_factors[options.profile] * standard_cores
+  
+                  return {
+                      "worker_cores": options.cpus,
+                      # see https://github.com/dask/dask-gateway/blob/e409f0e87f45e0a51fd7c009b5ec010bc5253bf1/dask-gateway-server/dask_gateway_server/backends/kubernetes/controller.py#L1055
+                      "worker_cores_limit": ceil(options.cpus), # this is necessary to get correct nthreads
+                      "worker_memory": f"{scaling_factors[options.profile] * standard_mem:.2f}G",
+                      # setting images separately here to get a light-weight scheduler
+                      "worker_extra_container_config": {
+                          "image": options.worker_image,
+                          "volumeMounts": [
+                              {"name": "rhg-data-bucket", "mountPath": "/gcs/rhg-data"},
+                              {"name": "rhg-data-scratch-bucket", "mountPath": "/gcs/rhg-data-scratch"},
+                              {"name": "cil-data-bucket", "mountPath": "/gcs/impactlab-data"},
+                          ],
+                      },
+                      "scheduler_extra_container_config": {
+                          "image": options.scheduler_image,
+                      },
+                      "worker_extra_pod_annotations": extra_annotations,
+                      "worker_extra_pod_config": {
+                          "tolerations": list(options.worker_tolerations.values()),
+                          "serviceAccount": "jhubuser",
+                          "serviceAccountName": "jhubuser",
+                          "volumes": [
+                              {"name": "rhg-data-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-bucket"}},
+                              {"name": "rhg-data-scratch-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-scratch-bucket"}},
+                              {"name": "cil-data-bucket", "persistentVolumeClaim": {"claimName": "cil-data-bucket"}},
+                          ],
+                          "affinity": {
+                              "nodeAffinity": {
+                                  "requiredDuringSchedulingIgnoredDuringExecution": {
+                                      "nodeSelectorTerms": [
+                                          {
+                                              "matchExpressions": [
+                                                  {
+                                                      "key": "iam.gke.io/gke-metadata-server-enabled",
+                                                      "operator": "In",
+                                                      "values": ["true"],
+                                                  }
+                                              ]
+                                          }
+                                      ]
+                                  }
+                              }
+                          },
+                      },
+                      "worker_extra_pod_labels": {
+                          **default_extra_labels,
+                          **options.extra_worker_labels,
+                      },
+                      "scheduler_extra_pod_annotations": extra_annotations,
+                      "scheduler_extra_pod_labels": default_extra_labels,
+                      "scheduler_extra_pod_config": {
+                          "tolerations": scheduler_tolerations,
+                          "affinity": {
+                              "nodeAffinity": {
+                                  "requiredDuringSchedulingIgnoredDuringExecution": {
+                                      "nodeSelectorTerms": [
+                                          {
+                                              "matchExpressions": [
+                                                  {"key": "cloud.google.com/gke-preemptible", "operator": "DoesNotExist"},
+                                              ]
+                                          }
+                                      ]
+                                  }
+                              }
+                          },
+
+                      },
+                      "environment": this_env,
+                      "idle_timeout": options.idle_timeout,
+                      "scheduler_cores": options.scheduler_cores,
+                      "scheduler_memory": options.scheduler_memory,
+                  }
+          
+              return Options(
+                  Select(
+                      "profile",
+                      ["micro", "standard", "big", "giant"],
+                      default="standard",
+                      label="Cluster Memory Size"
+                  ),
+                  Float("cpus", default=1.0, min=1.0, max=7.0, label="Worker CPUs"),
+                  String("worker_image", default="pangeo/base-notebook:2022.11.03", label="Worker Image"),
+                  String("scheduler_image", default="pangeo/base-notebook:2022.11.03", label="Scheduler Image"),
+                  String("extra_pip_packages", default="", label="Extra pip Packages"),
+                  String("gcsfuse_tokens", default="", label="GCSFUSE Tokens"),
+                  String("cred_name", default="", label="Bucket for Google Cloud Creds"),
+                  Mapping("worker_tolerations", default=default_worker_tolerations, label="Worker Pod Tolerations"),
+                  Mapping("extra_worker_labels", default={}, label="Extra Worker Pod Labels"),
+                  Mapping("env_items", default={}, label="Environment Variables"),
+                  String("scheduler_memory", default="22.5 G", label="Scheduler Memory"),
+                  Float("scheduler_cores", default=3.7, min=1, max=8, label="Scheduler CPUs"),
+                  Float("idle_timeout", default=300, min=0, label="Idle Timeout (s)"),
+                  # AMM may become default in the future and we can remove this option
+                  # or modify it to allow different policies
+                  Bool("active_memory_manager", default=True, label="Enable experimental active memory manager"),
+                  handler=option_handler,
+              )
+          c.Backend.cluster_options = cluster_options
