@@ -295,7 +295,7 @@ daskhub:
                       label="Cluster Memory Size"
                   ),
                   Float("cpus", default=1.0, min=1.0, max=7.0, label="Worker CPUs"),
-                  String("worker_image", default="pangeo/base-notebook:2022.11.03", label="Worker Image"),
+                  String("worker_image", default="pangeo/pangeo-notebook:2022.11.03", label="Worker Image"),
                   String("scheduler_image", default="pangeo/base-notebook:2022.11.03", label="Scheduler Image"),
                   String("extra_pip_packages", default="", label="Extra pip Packages"),
                   String("gcsfuse_tokens", default="", label="GCSFUSE Tokens"),
