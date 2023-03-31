@@ -24,7 +24,7 @@ data:
   workflowDefaults: |
     metadata:
       labels:
-        project: rhgresearch
+        workflows.rhgresearch.com/project: rhgresearch
     spec:
       securityContext:
         runAsNonRoot: true
