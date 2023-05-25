@@ -6,6 +6,7 @@ resources:
   - argo-workflows.yaml
   - cert-manager.yaml
   - csi-gcs.yaml
-  - rhgresearch.yaml
   - external-secrets.yaml
   - ingress-nginx.yaml
+  - operations-workflows.yaml
+  - rhgresearch.yaml
