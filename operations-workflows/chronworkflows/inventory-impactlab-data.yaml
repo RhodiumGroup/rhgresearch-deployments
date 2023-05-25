@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: inventory-impactlab-data
+  labels:
+    workflows.rhgresearch.com/env: prod
+    workflows.rhgresearch.org/project: operations
+  annotations:
+    workflows.argoproj.io/description: >-
+      Creates/updates 'impactlab-data' bucket object inventory in BigQuery.
+spec:
+  schedule: "0 0 1 * *"
+  concurrencyPolicy: "Replace"
+  workflowMetadata:
+    labels:
+      workflows.rhgresearch.com/env: prod
+      workflows.rhgresearch.org/project: operations
+  workflowSpec:
+    arguments:
+      parameters:
+        - name: bucket
+          value: "impactlab-data"
+    workflowTemplateRef:
+      name: inventorygcsbucket

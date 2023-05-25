@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: operations-workflows
+spec:
+  destination:
+    namespace: argo
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: operations-workflows
+    repoURL: https://github.com/rhodiumgroup/rhgresearch-deployments
+    targetRevision: HEAD
