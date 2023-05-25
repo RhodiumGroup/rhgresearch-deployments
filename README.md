@@ -11,3 +11,4 @@ Deployment repository for rhgresearch.com
 | cert-manager     | [![App Status](https://cd.rhgresearch.com/api/badge?name=cert-manager&revision=true)](https://cd.rhgresearch.com/applications/cert-manager)         |
 | external-secrets | [![App Status](https://cd.rhgresearch.com/api/badge?name=external-secrets&revision=true)](https://cd.rhgresearch.com/applications/external-secrets) |
 | csi-gcs          | [![App Status](https://cd.rhgresearch.com/api/badge?name=csi-gcs&revision=true)](https://cd.rhgresearch.com/applications/csi-gcs)                   |
+| operations-workflows   | [![App Status](https://cd.rhgresearch.com/api/badge?name=operations-workflows&revision=true)](https://cd.rhgresearch.com/applications/operations-workflows)     |
