@@ -105,7 +105,7 @@ data:
         memory: 64Mi
       limits:
         cpu: 500m
-        memory: 1Gi
+        memory: 1500Mi
 
   sso: |
     # This is the root URL of the OIDC provider (required).
