@@ -8,8 +8,14 @@ metadata:
     workflows.argoproj.io/tags: gcs,bq,inventory,operations
     workflows.argoproj.io/version: '>= 3.1.0'
   labels:
-    component: utils
+    workflows.rhgresearch.com/project: operations
 spec:
+  workflowMetadata:
+    labels:
+      workflows.rhgresearch.com/project: operations
+    annotations:
+      workflows.argoproj.io/description: >-
+        Parses objects in a GCS bucket, outputting table of metadata into a BigQuery Dataset.
   entrypoint: bucket2bq
   arguments:
     parameters:

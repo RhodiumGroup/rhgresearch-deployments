@@ -15,6 +15,11 @@ spec:
     labels:
       workflows.rhgresearch.com/env: prod
       workflows.rhgresearch.org/project: operations
+    annotations:
+      workflows.argoproj.io/description: >-
+        Inventory impactlab-data bucket.
+
+        Updates/creates BigQuery inventory of objects in impactlab-data GCS bucket.
   workflowSpec:
     arguments:
       parameters:
