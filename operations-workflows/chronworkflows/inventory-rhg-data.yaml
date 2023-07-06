@@ -14,7 +14,7 @@ spec:
   workflowMetadata:
     labels:
       workflows.rhgresearch.com/env: prod
-      workflows.rhgresearch.org/project: operations
+      workflows.rhgresearch.com/project: operations
     annotations:
       workflows.argoproj.io/description: >-
         Inventory rhg-data bucket.
