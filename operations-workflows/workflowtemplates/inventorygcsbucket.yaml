@@ -42,7 +42,7 @@ spec:
           - name: bq-location
           - name: scratch-bucket
       script:
-        image: ghcr.io/brews/bucket2bq:v0.2.0
+        image: ghcr.io/brews/bucket2bq:0.3.0
         env:
           - name: BUCKET2BQ_BUCKET
             value: "{{ inputs.parameters.bucket }}"
