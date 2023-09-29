@@ -20,13 +20,13 @@ daskhub:
         extraVolumes:
           - name: cil-data-bucket
             persistentVolumeClaim:
-              claimName: cil-data-bucket
+              claimName: impactlab-data-pvc
           - name: rhg-data-bucket
             persistentVolumeClaim:
-              claimName: rhg-data-bucket
+              claimName: rhg-data-pvc
           - name: rhg-data-scratch-bucket
             persistentVolumeClaim:
-              claimName: rhg-data-scratch-bucket
+              claimName: rhg-data-scratch-pvc
         extraVolumeMounts:
           - name: rhg-data-scratch-bucket
             mountPath: /gcs/rhg-data-scratch
@@ -43,6 +43,8 @@ daskhub:
       cloudMetadata:
         blockWithIptables: false
       serviceAccountName: jhubuser
+      extraAnnotations:
+        gke-gcsfuse/volumes: "true"
       extraEnv:
         CIL_SCRATCH_PREFIX: "gs://rhg-data-scratch"
         CIL_SCRATCH_BUCKET: "rhg-data-scratch"
@@ -216,6 +218,7 @@ daskhub:
                   if (":" not in options.worker_image) or (":" not in options.scheduler_image):
                       raise ValueError("When specifying an image you must also provide a tag")
                   extra_annotations = {
+                      "gke-gcsfuse/volumes": "true",
                       "hub.jupyter.org/username": user.name
                   }
                   default_extra_labels = {
@@ -260,9 +263,9 @@ daskhub:
                           "serviceAccount": "jhubuser",
                           "serviceAccountName": "jhubuser",
                           "volumes": [
-                              {"name": "rhg-data-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-bucket"}},
-                              {"name": "rhg-data-scratch-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-scratch-bucket"}},
-                              {"name": "cil-data-bucket", "persistentVolumeClaim": {"claimName": "cil-data-bucket"}},
+                              {"name": "rhg-data-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-pvc"}},
+                              {"name": "rhg-data-scratch-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-scratch-pvc"}},
+                              {"name": "cil-data-bucket", "persistentVolumeClaim": {"claimName": "impactlab-data-pvc"}},
                           ],
                           "affinity": {
                               "nodeAffinity": {
