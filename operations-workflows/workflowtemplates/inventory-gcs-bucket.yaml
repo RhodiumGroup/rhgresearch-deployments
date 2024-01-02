@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: inventorygcsbucket
+  name: inventory-gcs-bucket
   annotations:
     workflows.argoproj.io/description: >-
       Parses objects in a GCS bucket, outputting table of metadata into a BigQuery Dataset.

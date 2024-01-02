@@ -26,4 +26,4 @@ spec:
         - name: bucket
           value: "rhg-data"
     workflowTemplateRef:
-      name: inventorygcsbucket
+      name: inventory-gcs-bucket
