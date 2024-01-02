@@ -41,7 +41,7 @@ spec:
           - name: bq-table
           - name: bq-location
           - name: scratch-bucket
-      script:
+      container:
         image: ghcr.io/brews/bucket2bq:0.3.0
         env:
           - name: BUCKET2BQ_BUCKET
@@ -56,49 +56,7 @@ spec:
             value: "{{ inputs.parameters.scratch-bucket }}"
           - name: BUCKET2BQ_LOCATION
             value: "{{ inputs.parameters.bq-location }}"
-        command: [bash]
-        source: |
-          set -e -x
-          
-          if [ -z "${BUCKET2BQ_PROJECT}" ]
-          then
-            error "Error: Missing BigQuery project (set environment variable BUCKET2BQ_PROJECT)." 1
-          fi
-          if [ -z "${BUCKET2BQ_DATASET}" ]
-          then
-            error "Error: Missing BigQuery dataset (set environment variable BUCKET2BQ_DATASET)." 1
-          fi
-          if [ -z "${BUCKET2BQ_TABLE}" ]
-          then
-            error "Error: Missing BigQuery table (set environment variable BUCKET2BQ_TABLE)." 1
-          fi
-          if [ -z "${BUCKET2BQ_BUCKET}" ]
-          then
-            error "Error: Missing target GCS bucket (set environment variable BUCKET2BQ_BUCKET)." 1
-          fi
-          if [ -z "${BUCKET2BQ_SCRATCH_BUCKET}" ]
-          then
-            error "Error: Missing scratch GCS bucket (set environment variable BUCKET2BQ_SCRATCH_BUCKET)." 1
-          fi
-          if [ -z "${BUCKET2BQ_LOCATION}" ]
-          then
-            error "Error: Missing GCS bucket/BQ dataset location (set environment variable BUCKET2BQ_LOCATION)." 1
-          fi
-          
-          BUCKET2BQ_FILE=$(mktemp)
-          BUCKET2BQ_FILE="${BUCKET2BQ_FILE}.avro"
-          BUCKET2BQ_FILENAME=$(basename "$BUCKET2BQ_FILE")
-          BUCKET2BQ_FLAGS="-logtostderr -bucket ${BUCKET2BQ_BUCKET} -file ${BUCKET2BQ_FILE}"
-          
-          # Intentionally split args by space.
-          ./bucket2bq $BUCKET2BQ_FLAGS
-          
-          gsutil cp "${BUCKET2BQ_FILE}" "gs://${BUCKET2BQ_SCRATCH_BUCKET}/${BUCKET2BQ_FILENAME}"
-          
-          bq mk --project_id="${BUCKET2BQ_PROJECT}" --location="${BUCKET2BQ_LOCATION}" "${BUCKET2BQ_DATASET}" || true
-          bq load --project_id="${BUCKET2BQ_PROJECT}" --location="${BUCKET2BQ_LOCATION}" --schema bigquery.schema --source_format=AVRO --use_avro_logical_types --replace=true "${BUCKET2BQ_DATASET}.${BUCKET2BQ_TABLE}" "gs://${BUCKET2BQ_SCRATCH_BUCKET}/${BUCKET2BQ_FILENAME}"
-          
-          rm -f "${BUCKET2BQ_FILE}" || true
+        command: [ /run.sh ]
         securityContext:
           runAsUser: 1000
         resources:
