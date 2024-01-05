@@ -67,9 +67,6 @@ daskhub:
         - display_name: "pangeo/pangeo-notebook:2023.10.28"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.10.28
-        - display_name: "pangeo/pangeo-notebook:2023.10.24"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.10.24
         - display_name: "pangeo/pangeo-notebook:2023.10.22"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.10.22
@@ -79,27 +76,12 @@ daskhub:
         - display_name: "pangeo/pangeo-notebook:2023.09.25"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.09.25
-        - display_name: "pangeo/pangeo-notebook:2023.09.19"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.09.19
         - display_name: "pangeo/pangeo-notebook:2023.09.11"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.09.11
         - display_name: "pangeo/pangeo-notebook:2023.08.29"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.08.29
-        - display_name: "pangeo/pangeo-notebook:2023.07.05"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.07.05
-        - display_name: "pangeo/pangeo-notebook:2023.05.18"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.05.18
-        - display_name: "pangeo/pangeo-notebook:2023.05.08"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.05.08
-        - display_name: "pangeo/pangeo-notebook:2023.04.15"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.04.15
         - display_name: "pangeo/pangeo-notebook:2023.03.28"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.03.28
