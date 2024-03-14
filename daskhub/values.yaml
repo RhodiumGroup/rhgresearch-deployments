@@ -106,7 +106,7 @@ daskhub:
         - display_name: "climateimpactlab/coastal-notebook:latest"
           kubespawner_override:
             image: climateimpactlab/coastal-notebook:latest
-
+            image_pull_policy: "Always"
 
     hub:
       resources:
