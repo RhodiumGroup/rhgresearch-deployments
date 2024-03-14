@@ -103,6 +103,11 @@ daskhub:
         - display_name: "pangeo/pangeo-notebook:2023.02.27"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.02.27
+        - display_name: "climateimpactlab/coastal-notebook:latest"
+          kubespawner_override:
+            image: climateimpactlab/coastal-notebook:latest
+
+
     hub:
       resources:
         requests:
