@@ -208,7 +208,7 @@ daskhub:
               # `cpus` due to this issue: https://github.com/dask/dask-gateway/issues/364
               # Can update this behavior if that gets addressed
               # standard_cores = 1.0
-              standard_mem = 6.5
+              standard_mem = 6.25
               scaling_factors = {
                   "micro": 1,
                   "standard": 1.75,
