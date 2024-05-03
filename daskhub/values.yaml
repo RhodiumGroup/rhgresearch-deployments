@@ -205,7 +205,7 @@ daskhub:
   
               # A mapping from profile name to configuration overrides
               standard_cores = 1.0
-              standard_mem = 6.5
+              standard_mem = 6.25
               scaling_factors = {
                   "micro": 1,
                   "standard": 1.75,
