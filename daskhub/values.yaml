@@ -198,7 +198,7 @@ daskhub:
     gateway:
       extraConfig:
         optionHandler: |
-          from dask_gateway_server.options import Options, String, Select, Mapping, Float, Bool
+          from dask_gateway_server.options import Options, Integer, String, Select, Mapping, Float, Bool
           from math import ceil
   
           def cluster_options(user):
