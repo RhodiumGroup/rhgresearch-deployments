@@ -213,7 +213,7 @@ daskhub:
                   "giant": 7
               }
   
-              default_worker_tolerations = {
+              worker_tolerations = {
                   "0": {
                       "key": "k8s.dask.org_dedicated",
                       "operator": "Equal",
@@ -247,55 +247,42 @@ daskhub:
               ]
   
               def option_handler(options):
-                  if (":" not in options.worker_image) or (":" not in options.scheduler_image):
+                  if (":" not in options.worker_image):
                       raise ValueError("When specifying an image you must also provide a tag")
-                  extra_annotations = {
+                  pod_annotations = {
                       "gke-gcsfuse/volumes": "true",
                       "hub.jupyter.org/username": user.name
                   }
-                  default_extra_labels = {
+                  pod_labels = {
                       "hub.jupyter.org/username": user.name,
                   }
   
-                  this_env = options.env_items
-  
-                  # add active memory manager flag
-                  this_env[
-                    "DASK_DISTRIBUTED__SCHEDULER__ACTIVE_MEMORY_MANAGER__START"
-                  ] = str(options.active_memory_manager)
-  
-                  # add extra pip packages to be picked up by prepare.sh
-                  if options.extra_pip_packages != "":
-                      this_env["EXTRA_PIP_PACKAGES"] = options.extra_pip_packages
-  
-                  # calculate cpu request and limit
-                  # see above comment for why we are commenting out standard_cores for now
+                  # calculate cpu/memory requests
                   if options.cpus == 0.0:
-                      cpu_req = scaling_factors[options.profile] * standard_cores
+                      cpus = scaling_factors[options.profile] * standard_cores
                   else:
-                      cpu_req = options.cpus
+                      cpus = options.cpus
+
+                  if options.worker_memory == 0.0:
+                      mem = f"{scaling_factors[options.profile] * standard_mem:.2f}G"
+                  else:
+                      mem = int(options.worker_memory * 2 ** 30)
   
                   return {
-                      "worker_cores": cpu_req,
-                      # see https://github.com/dask/dask-gateway/blob/e409f0e87f45e0a51fd7c009b5ec010bc5253bf1/dask-gateway-server/dask_gateway_server/backends/kubernetes/controller.py#L1055
-                      "worker_cores_limit": ceil(cpu_req),
+                      "worker_cores": cpus,
                       "worker_threads": options.worker_threads,
-                      "worker_memory": f"{scaling_factors[options.profile] * standard_mem:.2f}G",
-                      # setting images separately here to get a light-weight scheduler
+                      "worker_memory": mem,
+                      "image": options.worker_image,
                       "worker_extra_container_config": {
-                          "image": options.worker_image,
                           "volumeMounts": [
                               {"name": "rhg-data-bucket", "mountPath": "/gcs/rhg-data"},
                               {"name": "rhg-data-scratch-bucket", "mountPath": "/gcs/rhg-data-scratch"},
                               {"name": "cil-data-bucket", "mountPath": "/gcs/impactlab-data"},
                           ],
                       },
-                      "scheduler_extra_container_config": {
-                          "image": options.scheduler_image,
-                      },
                       "worker_extra_pod_annotations": extra_annotations,
                       "worker_extra_pod_config": {
-                          "tolerations": list(options.worker_tolerations.values()),
+                          "tolerations": list(worker_tolerations.values()),
                           "serviceAccountName": "jhubuser",
                           "volumes": [
                               {"name": "rhg-data-bucket", "persistentVolumeClaim": {"claimName": "rhg-data-pvc"}},
@@ -320,12 +307,9 @@ daskhub:
                               }
                           },
                       },
-                      "worker_extra_pod_labels": {
-                          **default_extra_labels,
-                          **options.extra_worker_labels,
-                      },
+                      "worker_extra_pod_labels": pod_labels,
                       "scheduler_extra_pod_annotations": extra_annotations,
-                      "scheduler_extra_pod_labels": default_extra_labels,
+                      "scheduler_extra_pod_labels": pod_labels,
                       "scheduler_extra_pod_config": {
                           "tolerations": scheduler_tolerations,
                           "serviceAccountName": "jhubuser",
@@ -344,10 +328,10 @@ daskhub:
                           },
 
                       },
-                      "environment": this_env,
+                      "environment": options.env_items,
                       "idle_timeout": options.idle_timeout,
-                      "scheduler_cores": options.scheduler_cores,
-                      "scheduler_memory": options.scheduler_memory,
+                      "scheduler_cores": 7.4,
+                      "scheduler_memory": "44G",
                   }
           
               return Options(
@@ -358,21 +342,12 @@ daskhub:
                       label="Cluster Memory Size"
                   ),
                   Float("cpus", default=0.0, min=0.0, max=7.0, label="Worker CPUs"),
+                  Float("worker_memory", default=0.0, min=0.0, max=44, label="Worker Memory (GiB)"),
                   Integer("worker_threads", default=1, min=1, max=7, label="Dask Threads per Worker"),
                   String("worker_image", default="pangeo/pangeo-notebook:2024.02.27", label="Worker Image"),
-                  String("scheduler_image", default="pangeo/pangeo-notebook:2024.02.27", label="Scheduler Image"),
-                  String("extra_pip_packages", default="", label="Extra pip Packages"),
-                  String("gcsfuse_tokens", default="", label="GCSFUSE Tokens"),
-                  String("cred_name", default="", label="Bucket for Google Cloud Creds"),
-                  Mapping("worker_tolerations", default=default_worker_tolerations, label="Worker Pod Tolerations"),
                   Mapping("extra_worker_labels", default={}, label="Extra Worker Pod Labels"),
+                  # useful if you neet to communicate dask config to the scheduler, b/c
+                  # it won't respect values set locally
                   Mapping("env_items", default={}, label="Environment Variables"),
-                  String("scheduler_memory", default="22.5 G", label="Scheduler Memory"),
-                  Float("scheduler_cores", default=3.7, min=1, max=8, label="Scheduler CPUs"),
                   Float("idle_timeout", default=1200, min=0, label="Idle Timeout (s)"),
-                  # AMM may become default in the future and we can remove this option
-                  # or modify it to allow different policies
-                  Bool("active_memory_manager", default=True, label="Enable experimental active memory manager"),
-                  handler=option_handler,
-              )
           c.Backend.cluster_options = cluster_options
