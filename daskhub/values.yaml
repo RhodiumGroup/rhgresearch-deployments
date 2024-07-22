@@ -60,12 +60,6 @@ daskhub:
           kubespawner_override:
             image: pangeo/pangeo-notebook:2024.05.07
           default: true
-        - display_name: "pangeo/pangeo-notebook:2024.02.27"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2024.02.27
-        - display_name: "pangeo/pangeo-notebook:2023.10.28"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.10.28
         - display_name: "pangeo/pangeo-notebook:2023.10.03"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.10.03
@@ -75,9 +69,6 @@ daskhub:
         - display_name: "pangeo/pangeo-notebook:2023.09.11"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.09.11
-        - display_name: "pangeo/pangeo-notebook:2023.03.28"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.03.28
         - display_name: "pangeo/pangeo-notebook:2023.02.27"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.02.27
