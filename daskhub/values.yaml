@@ -60,18 +60,9 @@ daskhub:
           kubespawner_override:
             image: pangeo/pangeo-notebook:2024.07.08@sha256:49bd4743adf9c14652968fe007f518ca334195f53742a8b3273850238d763e62
           default: true
-        - display_name: "pangeo/pangeo-notebook:2024.05.07"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2024.05.07@sha256:aeae2c3aaa006e3c92c75fda638437b3296efdc4033962617217c14dcca4461d
-        - display_name: "pangeo/pangeo-notebook:2023.10.03"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.10.03@sha256:da525c5d42dd75aea600cdcc9b40232be7bcd1c8ab5decdfab2d38b7af340ce7
         - display_name: "pangeo/pangeo-notebook:2023.09.25"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.09.25@sha256:7fc4326960281106507dd751da3c7f4d7df0fbff6011648a0a2f51a95c8338df
-        - display_name: "pangeo/pangeo-notebook:2023.09.11"
-          kubespawner_override:
-            image: pangeo/pangeo-notebook:2023.09.11@sha256:e49645ebefcb76f7ec150e9d1b9234f57ee28a22d3a30f67ada2e11a0f2d8c8e
         - display_name: "pangeo/pangeo-notebook:2023.02.27"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.02.27@sha256:7fc74d16de4dce36085a932815ff5fe64ab6bd59cd5f86264275edcca4ec40ac
