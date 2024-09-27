@@ -56,10 +56,13 @@ daskhub:
         RHG_SCRATCH_PREFIX: "gs://rhg-data-scratch"
         RHG_SCRATCH_BUCKET: "rhg-data-scratch"
       profileList:
+        - display_name: "pangeo/pangeo-notebook:2024.09.11"
+          kubespawner_override:
+            image: pangeo/pangeo-notebook:2024.09.11@sha256:14ced742151215d4d76f5a95a7ba22e948485b7ea2f9fcbc891f7781c65c0949
+          default: true
         - display_name: "pangeo/pangeo-notebook:2024.07.08"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2024.07.08@sha256:49bd4743adf9c14652968fe007f518ca334195f53742a8b3273850238d763e62
-          default: true
         - display_name: "pangeo/pangeo-notebook:2023.09.25"
           kubespawner_override:
             image: pangeo/pangeo-notebook:2023.09.25@sha256:7fc4326960281106507dd751da3c7f4d7df0fbff6011648a0a2f51a95c8338df
@@ -316,8 +319,8 @@ daskhub:
                   ),
                   Float("cpus", default=0.0, min=0.0, max=7.0, label="Worker CPUs"),
                   Integer("worker_threads", default=1, min=1, max=7, label="Dask Threads per Worker"),
-                  String("worker_image", default="pangeo/pangeo-notebook:2024.07.08@sha256:49bd4743adf9c14652968fe007f518ca334195f53742a8b3273850238d763e62", label="Worker Image"),
-                  String("scheduler_image", default="pangeo/pangeo-notebook:2024.07.08@sha256:49bd4743adf9c14652968fe007f518ca334195f53742a8b3273850238d763e62", label="Scheduler Image"),
+                  String("worker_image", default="pangeo/pangeo-notebook:2024.09.11@sha256:14ced742151215d4d76f5a95a7ba22e948485b7ea2f9fcbc891f7781c65c0949", label="Worker Image"),
+                  String("scheduler_image", default="pangeo/pangeo-notebook:2024.09.11@sha256:14ced742151215d4d76f5a95a7ba22e948485b7ea2f9fcbc891f7781c65c0949", label="Scheduler Image"),
                   String("extra_pip_packages", default="", label="Extra pip Packages"),
                   String("gcsfuse_tokens", default="", label="GCSFUSE Tokens"),
                   String("cred_name", default="", label="Bucket for Google Cloud Creds"),
