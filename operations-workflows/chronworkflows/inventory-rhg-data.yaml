@@ -9,7 +9,8 @@ metadata:
     workflows.argoproj.io/description: >-
       Creates/updates 'rhg-data' bucket object inventory in BigQuery.
 spec:
-  schedule: "0 0 1 * *"
+  schedules:
+    - "0 0 1 * *"
   concurrencyPolicy: "Replace"
   workflowMetadata:
     labels:
