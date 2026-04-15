@@ -60,6 +60,9 @@ daskhub:
           kubespawner_override:
             image: pangeo/pangeo-notebook:2025.06.02@sha256:fc2ff2616dd51de5b18490eb06b68e9bcc369e13b12929fce092f43208d83f34
           default: true
+        - display_name: "pangeo/pangeo-notebook:2024.11.11"
+          kubespawner_override:
+            image: pangeo/pangeo-notebook:2024.11.11@sha256:16ac7877726fc5ac25070f863a901945ae678e11a299585f3c404cb3d3a34a24
         - display_name: "climateimpactlab/coastal-notebook:latest"
           kubespawner_override:
             image: climateimpactlab/coastal-notebook:latest
